@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+
+  php:
+    build:
+      context: ./app
+    container_name: kqxs_php
+    restart: always
+    working_dir: /var/www/html
+    volumes:
+      - ./app:/var/www/html
+      - ./logs:/logs
+    ports:
+      - "9000:9000"

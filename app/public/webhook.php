@@ -15,6 +15,7 @@ use App\Services\LotteryService;
 use App\Services\LotteryParser;
 use App\Services\PrizeChecker;
 use App\Services\ProvinceMap;
+use App\Services\UpdateDeduplicator;
 
 ignore_user_abort(true);
 
@@ -30,7 +31,8 @@ register_shutdown_function(function () {
 
         debug_log(
             'PHP FATAL ERROR',
-            $error
+            $error,
+            'error'
         );
     }
 });
@@ -39,18 +41,74 @@ try {
 
     Config::load();
 
-    debug_log('WEBHOOK START');
+    $acknowledged = false;
+
+    $ack = function () use (&$acknowledged): void {
+
+        if ($acknowledged) {
+
+            return;
+        }
+
+        if (!headers_sent()) {
+
+            http_response_code(200);
+            header('Content-Type: text/plain; charset=utf-8');
+        }
+
+        echo 'OK';
+
+        if (function_exists('fastcgi_finish_request')) {
+
+            fastcgi_finish_request();
+
+        } else {
+
+            @ob_flush();
+            flush();
+        }
+
+        $acknowledged = true;
+    };
+
+    debug_log('WEBHOOK START', null, 'info');
 
     $raw = file_get_contents('php://input');
-
-    debug_log('RAW INPUT', $raw);
 
     $input = json_decode(
         $raw,
         true
     );
 
-    debug_log('PARSED INPUT', $input);
+    if (!is_array($input)) {
+
+        $ack();
+
+        debug_log(
+            'INVALID JSON INPUT',
+            $raw,
+            'error'
+        );
+
+        exit;
+    }
+
+    $updateId =
+        $input['update_id']
+        ?? null;
+
+    if ($updateId !== null && UpdateDeduplicator::isDuplicate($updateId)) {
+
+        $ack();
+
+        debug_log(
+            'SKIP DUPLICATE UPDATE',
+            $updateId,
+            'info'
+        );
+
+        exit;
+    }
 
     $message =
         $input['message']
@@ -58,25 +116,24 @@ try {
 
     if (!$message) {
 
-        debug_log('NO MESSAGE');
+        $ack();
 
-        exit('NO MESSAGE');
+        debug_log('NO MESSAGE', null, 'info');
+
+        exit;
     }
 
     $chatId =
         $message['chat']['id'];
-
-    debug_log(
-        'CHAT ID',
-        $chatId
-    );
 
     if (
         !isset($message['photo']) &&
         !isset($message['document'])
     ) {
 
-        debug_log('NO IMAGE');
+        $ack();
+
+        debug_log('NO IMAGE', null, 'info');
 
         TelegramService::reply(
             $chatId,
@@ -93,46 +150,24 @@ try {
         $photos =
             $message['photo'];
 
-        debug_log(
-            'PHOTO COUNT',
-            count($photos)
-        );
-
         $largest = end($photos);
-
-        debug_log(
-            'LARGEST PHOTO',
-            $largest
-        );
 
         $fileId =
             $largest['file_id'];
 
-        debug_log(
-            'PHOTO FILE ID',
-            $fileId
-        );
     }
 
     if (isset($message['document'])) {
 
-        debug_log(
-            'DOCUMENT MODE',
-            $message['document']
-        );
-
         $fileId =
             $message['document']['file_id'];
-
-        debug_log(
-            'DOCUMENT FILE ID',
-            $fileId
-        );
     }
 
     if (!$fileId) {
 
-        debug_log('FILE ID EMPTY');
+        $ack();
+
+        debug_log('FILE ID EMPTY', null, 'error');
 
         TelegramService::reply(
             $chatId,
@@ -142,24 +177,19 @@ try {
         exit;
     }
 
-    debug_log(
-        'BEFORE GET FILE URL'
-    );
+    $ack();
 
     $imageUrl =
         TelegramService::getFileUrl(
             $fileId
         );
 
-    debug_log(
-        'AFTER GET FILE URL',
-        $imageUrl
-    );
-
     if (!$imageUrl) {
 
         debug_log(
-            'IMAGE URL FAILED'
+            'IMAGE URL FAILED',
+            null,
+            'error'
         );
 
         TelegramService::reply(
@@ -170,19 +200,10 @@ try {
         exit;
     }
 
-    debug_log(
-        'BEFORE OPENAI OCR'
-    );
-
     $data =
         OpenAIService::extract(
             $imageUrl
         );
-
-    debug_log(
-        'OPENAI RESULT',
-        $data
-    );
 
     $province =
         $data['province_slug']
@@ -220,21 +241,6 @@ try {
             ? "https://www.minhngoc.net.vn/ket-qua-xo-so/{$region}/{$province}/{$resultDate}.html"
             : null;
 
-    debug_log(
-        'PROVINCE',
-        $province
-    );
-
-    debug_log(
-        'TICKET NUMBER',
-        $ticket
-    );
-
-    debug_log(
-        'RESULT DATE',
-        $resultDate
-    );
-
     if (
         !$province ||
         !$ticket ||
@@ -242,7 +248,9 @@ try {
     ) {
 
         debug_log(
-            'OCR FAILED'
+            'OCR FAILED',
+            $data,
+            'error'
         );
 
         TelegramService::reply(
@@ -253,39 +261,20 @@ try {
         exit;
     }
 
-    debug_log(
-        'FETCH LOTTERY RESULT'
-    );
-
     $js =
         LotteryService::fetch(
             $province,
             $resultDate
         );
 
-    debug_log(
-        'LOTTERY JS LENGTH',
-        strlen($js)
-    );
-
     $results =
         LotteryParser::parse($js);
-
-    debug_log(
-        'PARSED RESULTS',
-        $results
-    );
 
     $wins =
         PrizeChecker::check(
             $ticket,
             $results
         );
-
-    debug_log(
-        'WIN RESULTS',
-        $wins
-    );
 
     if (!$wins) {
 
@@ -299,11 +288,6 @@ try {
 
             $text .= "\n\n🔗 Kiểm tra thủ công:\n{$checkUrl}";
         }
-
-        debug_log(
-            'SEND NO WIN',
-            $text
-        );
 
         TelegramService::reply(
             $chatId,
@@ -332,26 +316,12 @@ try {
         $text .= "\n\n🔗 Kiểm tra thủ công:\n{$checkUrl}";
     }
 
-    debug_log(
-        'FINAL MESSAGE',
-        $text
-    );
-
     TelegramService::reply(
         $chatId,
         $text
     );
 
-    debug_log(
-        'WEBHOOK END'
-    );
-
-    if (!headers_sent()) {
-
-        http_response_code(200);
-    }
-
-    echo 'OK';
+    debug_log('WEBHOOK END', null, 'info');
 
 } catch (\Throwable $e) {
 
@@ -362,13 +332,7 @@ try {
             'file' => $e->getFile(),
             'line' => $e->getLine(),
             'trace' => $e->getTraceAsString()
-        ]
+        ],
+        'error'
     );
-
-    if (!headers_sent()) {
-
-        http_response_code(500);
-    }
-
-    echo 'ERROR';
 }

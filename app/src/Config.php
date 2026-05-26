@@ -13,8 +13,11 @@ class Config
         );
     }
 
-    public static function get(string $key): ?string
+    public static function get(
+        string $key,
+        ?string $default = null
+    ): ?string
     {
-        return self::$env[$key] ?? null;
+        return self::$env[$key] ?? $default;
     }
 }

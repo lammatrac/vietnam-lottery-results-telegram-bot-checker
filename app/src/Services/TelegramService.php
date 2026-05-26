@@ -19,10 +19,6 @@ class TelegramService
         $url =
             "https://api.telegram.org/bot{$token}/{$method}";
 
-        debug_log('TELEGRAM API URL', $url);
-
-        debug_log('TELEGRAM API DATA', $data);
-
         $ch = curl_init($url);
 
         curl_setopt_array($ch, [
@@ -53,36 +49,51 @@ class TelegramService
 
         curl_close($ch);
 
-        debug_log(
-            'TELEGRAM API HTTP CODE',
-            $httpCode
-        );
-
-        debug_log(
-            'TELEGRAM API CURL ERROR',
-            $error
-        );
-
-        debug_log(
-            'TELEGRAM API RESPONSE',
-            $response
-        );
-
-        return json_decode(
+        $parsed = json_decode(
             $response,
             true
         );
+
+        if ($error !== '' || $httpCode >= 400 || !($parsed['ok'] ?? false)) {
+
+            debug_log(
+                'TELEGRAM API URL',
+                $url,
+                'error'
+            );
+
+            debug_log(
+                'TELEGRAM API DATA',
+                $data,
+                'error'
+            );
+
+            debug_log(
+                'TELEGRAM API HTTP CODE',
+                $httpCode,
+                'error'
+            );
+
+            debug_log(
+                'TELEGRAM API CURL ERROR',
+                $error,
+                'error'
+            );
+
+            debug_log(
+                'TELEGRAM API RESPONSE',
+                $response,
+                'error'
+            );
+        }
+
+        return $parsed;
     }
 
     public static function reply(
         int|string $chatId,
         string $text
     ): void {
-
-        debug_log(
-            'SEND MESSAGE',
-            $text
-        );
 
         self::api(
             'sendMessage',
@@ -98,21 +109,11 @@ class TelegramService
         string $fileId
     ): ?string {
 
-        debug_log(
-            'GET FILE URL',
-            $fileId
-        );
-
         $result = self::api(
             'getFile',
             [
                 'file_id' => $fileId
             ]
-        );
-
-        debug_log(
-            'GET FILE RESULT',
-            $result
         );
 
         if (
@@ -132,11 +133,6 @@ class TelegramService
 
         $url =
             "https://api.telegram.org/file/bot{$token}/{$path}";
-
-        debug_log(
-            'FINAL FILE URL',
-            $url
-        );
 
         return $url;
     }

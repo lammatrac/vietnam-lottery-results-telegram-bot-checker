@@ -14,7 +14,7 @@ use App\Services\OpenAIService;
 use App\Services\LotteryService;
 use App\Services\LotteryParser;
 use App\Services\PrizeChecker;
-use App\Support\ProvinceMap;
+use App\Services\ProvinceMap;
 
 ignore_user_abort(true);
 
@@ -188,6 +188,15 @@ try {
         $data['province_slug']
         ?? null;
 
+    if ($province) {
+
+        $province = str_replace(
+            '_',
+            '-',
+            strtolower(trim($province))
+        );
+    }
+
     $ticket =
         $data['ticket_number']
         ?? null;
@@ -300,7 +309,10 @@ try {
         'WEBHOOK END'
     );
 
-    http_response_code(200);
+    if (!headers_sent()) {
+
+        http_response_code(200);
+    }
 
     echo 'OK';
 
@@ -316,7 +328,10 @@ try {
         ]
     );
 
-    http_response_code(500);
+    if (!headers_sent()) {
+
+        http_response_code(500);
+    }
 
     echo 'ERROR';
 }

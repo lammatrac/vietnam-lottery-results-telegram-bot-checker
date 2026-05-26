@@ -14,6 +14,7 @@ use App\Services\OpenAIService;
 use App\Services\LotteryService;
 use App\Services\LotteryParser;
 use App\Services\PrizeChecker;
+use App\Support\ProvinceMap;
 
 ignore_user_abort(true);
 
@@ -191,6 +192,11 @@ try {
         $data['ticket_number']
         ?? null;
 
+    $provinceName =
+        $province
+            ? ProvinceMap::get($province)
+            : null;
+
     debug_log(
         'PROVINCE',
         $province
@@ -256,7 +262,7 @@ try {
         $text =
             "❌ Không trúng\n\n" .
             "Vé: {$ticket}\n" .
-            "Đài: {$province}";
+            "Đài: {$provinceName}";
 
         debug_log(
             'SEND NO WIN',

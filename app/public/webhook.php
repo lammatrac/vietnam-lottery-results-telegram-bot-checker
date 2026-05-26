@@ -201,6 +201,10 @@ try {
         $data['ticket_number']
         ?? null;
 
+    $resultDate =
+        $data['result_date']
+        ?? null;
+
     $provinceName =
         $province
             ? ProvinceMap::get($province)
@@ -216,9 +220,15 @@ try {
         $ticket
     );
 
+    debug_log(
+        'RESULT DATE',
+        $resultDate
+    );
+
     if (
         !$province ||
-        !$ticket
+        !$ticket ||
+        !$resultDate
     ) {
 
         debug_log(
@@ -239,7 +249,8 @@ try {
 
     $js =
         LotteryService::fetch(
-            $province
+            $province,
+            $resultDate
         );
 
     debug_log(

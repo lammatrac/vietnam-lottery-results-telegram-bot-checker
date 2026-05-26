@@ -107,16 +107,17 @@ dump_parsed($result);
 section('LotteryService::fetch()');
 
 $province = 'tp-hcm';
+$date = '14-05-2026';
 
-echo "  Fetching province: {$province} ...\n";
+echo "  Fetching province: {$province} on {$date} ...\n";
 
-$raw = LotteryService::fetch($province);
+$raw = LotteryService::fetch($province, $date);
 
 // Test 7: returns a non-empty string
 if (is_string($raw) && strlen($raw) > 0) {
-    pass('Returns non-empty string for ' . $province);
+    pass('Returns non-empty string for ' . $province . ' on ' . $date);
 } else {
-    fail('Returns non-empty string for ' . $province);
+    fail('Returns non-empty string for ' . $province . ' on ' . $date);
 }
 
 // Test 8: content looks like JS/HTML (contains 'giai')

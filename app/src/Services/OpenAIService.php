@@ -21,7 +21,7 @@ class OpenAIService
                         [
                             'type' => 'text',
                             'text' =>
-                                'Extract Vietnam lottery ticket info. Return JSON only: province_slug, ticket_number'
+                                'Extract Vietnam lottery ticket info. Return JSON only: province_slug, ticket_number, result_date. Use result_date in dd-mm-yyyy format.'
                         ],
                         [
                             'type' => 'image_url',

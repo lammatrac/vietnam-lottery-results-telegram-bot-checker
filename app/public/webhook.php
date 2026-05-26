@@ -210,6 +210,16 @@ try {
             ? ProvinceMap::get($province)
             : null;
 
+    $region =
+        $province
+            ? ProvinceMap::getRegion($province)
+            : null;
+
+    $checkUrl =
+        ($province && $region && $resultDate)
+            ? "https://www.minhngoc.net.vn/ket-qua-xo-so/{$region}/{$province}/{$resultDate}.html"
+            : null;
+
     debug_log(
         'PROVINCE',
         $province
@@ -282,7 +292,13 @@ try {
         $text =
             "❌ Không trúng\n\n" .
             "Vé: {$ticket}\n" .
-            "Đài: {$provinceName}";
+            "Đài: {$provinceName}\n" .
+            "Ngày: {$resultDate}";
+
+        if ($checkUrl) {
+
+            $text .= "\n\n🔗 Kiểm tra thủ công:\n{$checkUrl}";
+        }
 
         debug_log(
             'SEND NO WIN',
@@ -304,6 +320,16 @@ try {
 
         $text .=
             "- {$win['prize']}: {$win['number']}\n";
+    }
+
+    $text .=
+        "\nVé: {$ticket}\n" .
+        "Đài: {$provinceName}\n" .
+        "Ngày: {$resultDate}";
+
+    if ($checkUrl) {
+
+        $text .= "\n\n🔗 Kiểm tra thủ công:\n{$checkUrl}";
     }
 
     debug_log(

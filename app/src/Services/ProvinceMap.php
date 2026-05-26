@@ -4,80 +4,126 @@ namespace App\Services;
 
 class ProvinceMap
 {
-    public static function get($slug)
+    private static function map(): array
     {
-        $map = [
+        return [
+            'mien-nam' => [
 
-            'an-giang' => 'An Giang',
+                'an-giang' => 'An Giang',
 
-            'bac-lieu' => 'Bạc Liêu',
+                'bac-lieu' => 'Bạc Liêu',
 
-            'ben-tre' => 'Bến Tre',
+                'ben-tre' => 'Bến Tre',
 
-            'binh-duong' => 'Bình Dương',
+                'binh-duong' => 'Bình Dương',
 
-            'binh-phuoc' => 'Bình Phước',
+                'binh-phuoc' => 'Bình Phước',
 
-            'binh-thuan' => 'Bình Thuận',
+                'binh-thuan' => 'Bình Thuận',
 
-            'ca-mau' => 'Cà Mau',
+                'ca-mau' => 'Cà Mau',
 
-            'can-tho' => 'Cần Thơ',
+                'can-tho' => 'Cần Thơ',
 
-            'da-lat' => 'Đà Lạt',
+                'da-lat' => 'Đà Lạt',
 
-            'da-nang' => 'Đà Nẵng',
+                'dong-nai' => 'Đồng Nai',
 
-            'dak-lak' => 'Đắk Lắk',
+                'dong-thap' => 'Đồng Tháp',
 
-            'dak-nong' => 'Đắk Nông',
+                'hau-giang' => 'Hậu Giang',
 
-            'dong-nai' => 'Đồng Nai',
+                'kien-giang' => 'Kiên Giang',
 
-            'dong-thap' => 'Đồng Tháp',
+                'long-an' => 'Long An',
 
-            'gia-lai' => 'Gia Lai',
+                'soc-trang' => 'Sóc Trăng',
 
-            'hau-giang' => 'Hậu Giang',
+                'tay-ninh' => 'Tây Ninh',
 
-            'khanh-hoa' => 'Khánh Hòa',
+                'tien-giang' => 'Tiền Giang',
 
-            'kien-giang' => 'Kiên Giang',
+                'tp-hcm' => 'TP. HCM',
 
-            'kon-tum' => 'Kon Tum',
+                'tra-vinh' => 'Trà Vinh',
 
-            'long-an' => 'Long An',
+                'vinh-long' => 'Vĩnh Long',
 
-            'ninh-thuan' => 'Ninh Thuận',
+                'vung-tau' => 'Vũng Tàu',
+            ],
 
-            'phu-yen' => 'Phú Yên',
+            'mien-trung' => [
 
-            'quang-binh' => 'Quảng Bình',
+                'binh-dinh' => 'Bình Định',
 
-            'quang-nam' => 'Quảng Nam',
+                'da-nang' => 'Đà Nẵng',
 
-            'quang-ngai' => 'Quảng Ngãi',
+                'dak-lak' => 'Đắk Lắk',
 
-            'quang-tri' => 'Quảng Trị',
+                'dak-nong' => 'Đắk Nông',
 
-            'soc-trang' => 'Sóc Trăng',
+                'gia-lai' => 'Gia Lai',
 
-            'tay-ninh' => 'Tây Ninh',
+                'khanh-hoa' => 'Khánh Hòa',
 
-            'thua-thien-hue' => 'Thừa Thiên Huế',
+                'kon-tum' => 'Kon Tum',
 
-            'tien-giang' => 'Tiền Giang',
+                'ninh-thuan' => 'Ninh Thuận',
 
-            'tp-hcm' => 'TP.HCM',
+                'phu-yen' => 'Phú Yên',
 
-            'tra-vinh' => 'Trà Vinh',
+                'quang-binh' => 'Quảng Bình',
 
-            'vinh-long' => 'Vĩnh Long',
+                'quang-nam' => 'Quảng Nam',
 
-            'vung-tau' => 'Vũng Tàu'
+                'quang-ngai' => 'Quảng Ngãi',
+
+                'quang-tri' => 'Quảng Trị',
+
+                'hue' => 'Huế',
+            ],
+
+            'mien-bac' => [
+
+                'bac-ninh' => 'Bắc Ninh',
+
+                'ha-noi' => 'Hà Nội',
+
+                'hai-phong' => 'Hải Phòng',
+
+                'nam-dinh' => 'Nam Định',
+
+                'quang-ninh' => 'Quảng Ninh',
+
+                'thai-binh' => 'Thái Bình',
+            ],
         ];
+    }
 
-        return $map[$slug] ?? $slug;
+    public static function get(string $slug): string
+    {
+        foreach (self::map() as $provinces) {
+
+            if (isset($provinces[$slug])) {
+
+                return $provinces[$slug];
+            }
+        }
+
+        return $slug;
+    }
+
+    public static function getRegion(string $slug): ?string
+    {
+        foreach (self::map() as $region => $provinces) {
+
+            if (isset($provinces[$slug])) {
+
+                return $region;
+            }
+        }
+
+        return null;
     }
 
     public static function all()
